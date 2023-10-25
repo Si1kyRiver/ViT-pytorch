@@ -24,10 +24,9 @@ def get_loader(args):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
+
     if args.dataset == "insects":
-
         data_dir = "./data"
-
         trainset = ImageFolder(root=data_dir + "/train", transform=transform_train)
         testset = ImageFolder(root=data_dir + "/val", transform=transform_test)
     elif args.dataset == "cifar10":
