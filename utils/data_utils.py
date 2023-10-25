@@ -25,10 +25,9 @@ def get_loader(args):
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
     if args.dataset == "insects":
-        # Define the data directories
-        data_dir = "./data"  # Replace with the actual path to your data directory
 
-        # Create datasets for the train and validation splits
+        data_dir = "./data"
+
         trainset = ImageFolder(root=data_dir + "/train", transform=transform_train)
         testset = ImageFolder(root=data_dir + "/val", transform=transform_test)
     elif args.dataset == "cifar10":
