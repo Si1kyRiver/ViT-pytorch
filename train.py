@@ -183,6 +183,8 @@ def train(args, model):
     set_seed(args)  # Added here for reproducibility (even between python 2 and 3)
     losses = AverageMeter()
     global_step, best_acc = 0, 0
+    total_correct = 0
+    total_samples = 0
     while True:
         model.train()
         epoch_iterator = tqdm(train_loader,
@@ -209,17 +211,27 @@ def train(args, model):
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
                 else:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-                scheduler.step()
+
                 optimizer.step()
                 optimizer.zero_grad()
+                scheduler.step()
                 global_step += 1
 
                 epoch_iterator.set_description(
                     "Training (%d / %d Steps) (loss=%2.5f)" % (global_step, t_total, losses.val)
                 )
+                logits = model(x)[0]
+                predicted = torch.argmax(logits, dim=-1)
+                correct = (predicted == y).sum().item()
+                total_correct += correct
+                total_samples += x.size(0)
+                accuracy = total_correct / total_samples
+                logger.info("\n")
+                logger.info('Train Acc: {:.4f}'.format(accuracy))
                 if args.local_rank in [-1, 0]:
                     writer.add_scalar("train/loss", scalar_value=losses.val, global_step=global_step)
                     writer.add_scalar("train/lr", scalar_value=scheduler.get_lr()[0], global_step=global_step)
+                    writer.add_scalar("train/accuracy", scalar_value=accuracy, global_step=global_step)
                 if global_step % args.eval_every == 0 and args.local_rank in [-1, 0]:
                     accuracy = valid(args, model, writer, test_loader, global_step)
                     if best_acc < accuracy:
